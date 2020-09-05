@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <link rel="stylesheet" href="./w_merger.css"/>
+    </head>
+
+    <body id="body">
+        <div id="popup-content" class="content">
+            <div>
+                <h2>Merge by pinned tabs</h2>
+                <div id="buttonMergePinTabs" class="button">Merge pinned tabs</div>
+            </div>
+            <div>
+                <h2>Merge by selecting windows</h2>
+                <div id ="buttonGetWindows" class="button">Get Windows</div>
+                <p>Select Window to move</p>
+                <select id="selectSourceWindow" class="drop-down">
+                    <option value="none">None</option>
+                </select>
+                <p>Select Window to move tabs to</p>
+                <select id="selectTargetWindow" class="drop-down">
+                    <option value="none">None</option>
+                </select>
+                <div id="buttonMerge" class="button">Merge these windows</div>
+            </div>
+        </div>
+        <div id="error" class="hidden">
+            <p>Something went wrong. Check the console!</p>
+        </div>
+        <script type="text/javascript" src="./scripts.js"></script>
+    </body>
+</html>
