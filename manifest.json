@@ -21,7 +21,9 @@
         "notifications",
         "tabs",
         "activeTab",
-        "storage"
+        "storage",
+        "downloads",
+        "downloads.open"
     ],
     "background":{
         "scripts":[

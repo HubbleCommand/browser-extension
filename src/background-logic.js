@@ -100,6 +100,8 @@ browser.contextMenus.onClicked.addListener(async function(info, tab, bookmark) {
     console.log(info)
     console.log("Tab: ")
     console.log(tab)
+    console.log("Bookmark: ")
+    console.log(bookmark)
     switch (info.menuItemId) {
         case "save-window":
             await saveSavedWindows(await browser.windows.get(tab.windowId, {populate:true}))
@@ -237,6 +239,7 @@ browser.contextMenus.onClicked.addListener(async function(info, tab, bookmark) {
             var bookmark = await browser.bookmarks.get(info.bookmarkId)
             sendURLToServer(bookmark.url);
             break;
+
         case "sabu-send-tab-server":
             //Get tab, bookmark it, send to server
             sendURLToServer(tab.url);
@@ -273,8 +276,9 @@ browser.contextMenus.onClicked.addListener(async function(info, tab, bookmark) {
                 });
             });*/
             break;
+
         case "export-bookmarks":
-            
+            downloadBookmarksFolderToFile(info);
             break;
         
         default:
