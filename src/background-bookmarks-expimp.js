@@ -1,104 +1,46 @@
-/*var fs = require('fs');
-
-fs.writeFile('mynewfile3.txt', 'Hello content!', function (err) {
-  if (err) throw err;
-  console.log('Saved!');
-}); */
-
-//Components.utils.import("resource://gre/modules/osfile.jsm", this)
-
-class BookmarkData {
-  constructor(href, date_added, date_modified, title) {
-      this.href = href;
-      this.date_added = date_added;
-      this.date_modified = date_modified;
-      this.title = title;
-    }
-}
-
-/**
- * 
+/** Downloads a bookmark or folder of bookmarks into a JSON file
+ * @param {browser.bookmarks.BookmarkTreeNode} start the BookmarkTreeNode (Bookmark or Folder) to download
  */
 async function downloadBookmarksFolderToFile(start){
-  var bookmarks = [];
-  /*Get all the sub-bookmarks*/
+    var bookmarks = [];
+    var bookmark = await browser.bookmarks.get(start.bookmarkId)
 
-  console.log(start.bookmarkId)
-  var bookmark = await browser.bookmarks.get(start.bookmarkId)
-
-  console.log("Bookmark")
-  console.log(bookmark)
-  
-  async function recursivelyGetFolderContents(item){
-    //console.log("Checking object: ...")
-    //console.log(item)
-    //console.log(typeof item.type)
-
-    if (item.type == "bookmark"){
-      console.log("Got to a bookmark. Adding!")
-      //bookmarks.push(new BookmarkData(item.url, item.dateAdded, item.dateGroupModified, item.title))
-      bookmarks.push({
-        url : item.url, 
-        date_added : item.dateAdded,
-        date_modified : item.dateGroupModified,
-        title : item.title})
-    } else if(item.type == "folder") {
-      console.log("Got a folder! getting contents...")
-      var folderContents = await browser.bookmarks.getChildren(item.id)
-      console.log("FOlder has : " + folderContents.length)
-      for (var i = 0; i < folderContents.length; i++){
-        await recursivelyGetFolderContents(folderContents[i])
-      }
-    } else {
-      //folder.children.forEach(element => recursivelyGetFolderContents(element))
-      console.log("Oh fuck off...")
-      console.log(item.type)
+    async function recursivelyGetFolderContents(item){
+        if (item.type == "bookmark"){
+            console.log("Got to a bookmark. Adding!")
+            bookmarks.push(new BookmarkData(item.url, item.dateAdded, item.dateGroupModified, item.title))
+        } else if(item.type == "folder") {
+            console.log("Got a folder! getting contents...")
+            var folderContents = await browser.bookmarks.getChildren(item.id)
+            for (var i = 0; i < folderContents.length; i++){
+                await recursivelyGetFolderContents(folderContents[i])
+            }
+        } else {
+            throw "Bookmark item does not have a valid type!"
+        }
     }
-  }
-  await recursivelyGetFolderContents(bookmark[0])
+    await recursivelyGetFolderContents(bookmark[0])
 
-  //console.log("Bookmarks")
-  //console.log(bookmarks)
+    var bookmarksBlob = new Blob([JSON.stringify(bookmarks, null, 2)], {
+        type:'application/json'
+    })
 
-  //Have gotten bookmarks, save them!
-  var bookmarksBlob = new Blob([JSON.stringify(bookmarks, null, 2)]/*bookmarks*/, {
-    type:'application/json'
-  })
+    var bookmarksObjectUrl = URL.createObjectURL(bookmarksBlob);
 
-  var bookmarksObjectUrl = URL.createObjectURL(bookmarksBlob);
-  console.log(bookmarksObjectUrl)
+    browser.downloads.download({
+        filename : `bookmarks-${bookmark[0].title}-${getCurrentDateTimeDashedColoned()}.json`,
+        saveAs: true,
+        url: bookmarksObjectUrl,
+        conflictAction : 'uniquify'
+    });
 
-  /*var downloading = browser.downloads.download(
-    {
-      filename : "bookmarks.txt",
-      saveAs: false,
-      url: bookmarksObjectUrl,
-      conflictAction : "overwrite"
+    //Memory management, revoke URL for object. HOWEVER this can only be done ONCE the download is completed!
+    function handleChanged(delta) {
+        if (delta.state && delta.state.current === "complete") {
+            console.log(`Download ${delta.id} has completed.`);
+            URL.revokeObjectURL(bookmarksObjectUrl) //This actually does work, but is async I think
+        }
     }
-  )*/
 
-  function onStartedDownload(id) {
-    console.log(`Started downloading: ${id}`);
-  }
-  
-  function onFailed(error) {
-    console.log(`Download failed: ${error}`);
-  }
-  
-  var downloading = browser.downloads.download({
-    /*url : downloadUrl,
-    filename : 'my-image-again.png',
-    conflictAction : 'uniquify'*/
-    filename : "bookmarks.json",
-    saveAs: false,
-    url: bookmarksObjectUrl,
-    conflictAction : "overwrite"
-  });
-  
-  downloading.then(onStartedDownload, onFailed);
-
-  //Memory management, revoke URL for object
-  //HOWEVER this can only be done ONCE the download is completed
-  //await(1000)
-  //URL.revokeObjectURL(bookmarksObjectUrl)
+    browser.downloads.onChanged.addListener(handleChanged);
 }
