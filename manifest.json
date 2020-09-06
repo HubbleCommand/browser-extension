@@ -6,12 +6,12 @@
       },
     "name":"Sasha's Assorted Utilities",
     "manifest_version":2.0,
-    "version":"1",
+    "version":"0.1",
     "description":"Assorted browser utilities to simplify varios tasks.",
     "icons":{
         "48":"icons/Extension_Icon_256.png"
     },
-    "author":"Sasha Christopher Poirier-Wettstein",
+    "author":"Sasha Christopher Poirier",
     "permissions":[
         "*://example.com/*",
         "<all_urls>",
@@ -27,6 +27,8 @@
     ],
     "background":{
         "scripts":[
+            "src/utils/date-formatter.js",
+            "src/utils/BookmarkData.js",
             "src/background-logic.js",
             "src/background-create-menus.js",
             "src/background-window-saver.js",
