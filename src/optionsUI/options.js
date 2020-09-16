@@ -59,6 +59,7 @@ async function handlePicked() {
         counter += 1;
     }
     console.log("Done importing!!!");
+    document.getElementById("loadingImportBookmarksProgress").innerHTML = "Import progress : not importing any bookmarks...";
     document.getElementById("input").disabled = false;  //re-enable the button
 }
 
