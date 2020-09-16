@@ -117,22 +117,13 @@ browser.contextMenus.onClicked.addListener(async function(info, tab, bookmark) {
                 var value = await browser.bookmarks.get(info.bookmarkId)
                 await countBookmarksInFolder(value, info.bookmarkId)
                 var index = counters.findIndex(count => count.id === info.bookmarkId)
-                var creating = browser.notifications.create({
-                    type:"basic",
-                    message:"There are "+counters[index].count+ " bookmarks in folder:   " + value[0].title,
-                    title:"Count Bookmarks",
-                })
+                createBrowserNotification({message:"There are "+counters[index].count+ " bookmarks in folder:   " + value[0].title, title:"Count Bookmarks"})
+                
                 counters = counters.filter((value,index,arr)=>{
                     return value.id !== info.bookmarkId
                 })
             } else {
                 createBrowserNotification({message:"Counter is already active on this folder!", title:"Count Bookmarks"})
-                /*
-                var creating = browser.notifications.create({
-                    type:"basic",
-                    message:"Counter is already active on this folder!",
-                    title:"Count Bookmarks",
-                })*/
             }
             break;
 
