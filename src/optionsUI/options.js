@@ -29,19 +29,27 @@ function restoreOptions() {
 }
 
 //Missnamed, should be completePath or makePath or something
-async function resolvePath(subTree, path){
+async function resolvePath(subTree, path, root){
+    
     var folderLocVar = null;
     async function recusivelyMakePath(currentTree, path, index){
-        console.log("Index : " + index)
+        //console.log("Index : " + index)
         //Check if the current children have the correct child
         var correctFolder = currentTree.children.filter(item => item.title == path[index]);
         
         //If child is missing, create it
-        if(correctFolder.length == 0){
+        if(correctFolder.length == 0 && path[index]){   //Adding && path[index] removes the empty folders that were being generated
+            console.log("Folder '" + path[index] + "' is missing")
             await browser.bookmarks.create({
                 title: path[index],
                 parentId : currentTree.id
             });
+            setTimeout(function(){
+            }, 3000);
+
+            console.log("Making new subtree for : " + root.id)
+            currentTree = await browser.bookmarks.getSubTree(currentTree.id);
+            currentTree = currentTree[0]
         }
 
         //Retrieve the correct folder
@@ -51,29 +59,37 @@ async function resolvePath(subTree, path){
         }
 
         //If there is path remaining, recursively call
-        if(index <= path.length && correctFolder){
-            /*for(child of correctFolder){
-                if(child.url){
-                    console.log("Er have a URL: " + child.url)
-                } else {
-                    recusivelyMakePath(child, path, index+1)
-                }
-            }*/
-            console.log("Current tree: ")
+//        if(/*index <= path.length &&*/ correctFolder){
+        if(index < path.length && correctFolder){
+            /*console.log("Current tree: ")
             console.log(currentTree)
             console.log("Correct folder: ")
-            console.log(correctFolder)
-            recusivelyMakePath(correctFolder, path, index+1);
+            console.log(correctFolder)*/
+            await recusivelyMakePath(correctFolder, path, index+1);
         } else {
             //return correctFolder;
-            console.log("Should be at end, so not doing anything (index : " + index + " path length : " + path.length)
-            folderLocVar = correctFolder;
+            //console.log("Should be at end, so not doing anything (index : " + index + " path length : " + path.length)
+            /*console.log("Current tree: ")
+            console.log(currentTree)
+            console.log("Correct folder: ")
+            console.log(correctFolder)*/
+            //folderLocVar = correctFolder;
+            folderLocVar = currentTree;
         }
+        /*if(!(index <= path.length)){
+            folderLocVar = currentTree;
+        }*/
+        //folderLocVar = currentTree;
     }
-
+    
+    //NEED TO UPDATE SUBTREE?
+    
     await recusivelyMakePath(subTree, path, 0);
+    console.log("Sub tree:")
+    console.log(subTree)
     
     if(folderLocVar){
+        console.log("Creating bookmark in : ")
         console.log(folderLocVar);
         return folderLocVar;
     } else {
@@ -109,17 +125,21 @@ async function handlePicked() {
     for(item of data){
         var newBookmarkParentId;
 
+        console.log("Creating bookmark for: ")
+        console.log(item)
+
         //Before we create the new bookmark, we need to make sure that it's path exists
         subtree = await browser.bookmarks.getSubTree(createNewFolderRoot.id);
         if(typeof item.path == "string"){
             var path = item.path.split("///---rsvp-delim---///")
             path.shift()
-            console.log("Path : " + path)
-            newBookmarkParentId = await resolvePath(subtree[0], path)
-            console.log("New Bookmark ID")
-            console.log(newBookmarkParentId)
+            
+            newBookmarkParentId = await resolvePath(subtree[0], path, subtree[0])
+            if(newBookmarkParentId.id){
+                newBookmarkParentId = newBookmarkParentId.id;
+            }
             if(typeof newBookmarkParentId != "string"){
-                //newBookmarkParentId = createNewFolderRoot.id;
+                newBookmarkParentId = createNewFolderRoot.id;
             }
         } else {
             newBookmarkParentId = createNewFolderRoot.id;
